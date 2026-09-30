@@ -3,8 +3,8 @@
 #   frontend/  React + Vite  -> Static Site
 #   backend/   FastAPI       -> Web Service
 #
-# The two services deploy independently (sync: false), so neither blueprint
-# update overwrites env vars you set in the Render dashboard.
+# Env vars marked `sync: false` are set in the Render dashboard rather than in
+# this file, so a blueprint update never overwrites their values.
 #
 # Before the first deploy, set these in the Render dashboard (see DEPLOY.md):
 #   frontend  VITE_API_URL  = https://<backend-service-name>.onrender.com
@@ -20,7 +20,6 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
-    sync: false
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.8"
@@ -52,11 +51,9 @@ services:
   - type: web
     name: smartwaste-360
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
-    sync: false
     envVars:
       # Inlined into the bundle at build time - must be the public API origin.
       - key: VITE_API_URL

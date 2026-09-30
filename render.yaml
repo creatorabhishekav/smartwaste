@@ -1,0 +1,69 @@
+# SmartWaste 360 - Render blueprint (monorepo)
+#
+#   frontend/  React + Vite  -> Static Site
+#   backend/   FastAPI       -> Web Service
+#
+# The two services deploy independently (sync: false), so neither blueprint
+# update overwrites env vars you set in the Render dashboard.
+#
+# Before the first deploy, set these in the Render dashboard (see DEPLOY.md):
+#   frontend  VITE_API_URL  = https://<backend-service-name>.onrender.com
+#   backend   CORS_ORIGINS  = https://<frontend-service-name>.onrender.com
+
+services:
+  # ------------------------------------------------------------------ API ---
+  - type: web
+    name: smartwaste-360-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    sync: false
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: ENVIRONMENT
+        value: production
+      # Render generates and stores a unique secret on the first deploy.
+      - key: JWT_SECRET
+        generateValue: true
+      # Comma-separated list of allowed browser origins. No wildcards: the API
+      # uses Authorization headers, and an explicit list keeps credentials safe.
+      - key: CORS_ORIGINS
+        sync: false
+      # SQLite fallback is used when DATABASE_URL is unset. Render's filesystem
+      # is ephemeral, so this is DEMO data only and is re-seeded on every deploy.
+      - key: SEED_ON_STARTUP
+        value: "true"
+      # GEMINI_API_KEY is optional. Unset -> deterministic DemoAIProvider.
+      - key: AI_PROVIDER
+        value: auto
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: GEMINI_API_KEY
+        sync: false
+      # Set to postgresql+psycopg2://... to use a managed Postgres instead.
+      - key: DATABASE_URL
+        sync: false
+
+  # -------------------------------------------------------------- FRONTEND ---
+  - type: web
+    name: smartwaste-360
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    sync: false
+    envVars:
+      # Inlined into the bundle at build time - must be the public API origin.
+      - key: VITE_API_URL
+        sync: false
+      # BrowserRouter needs every deep link (/admin, /app/...) to serve
+      # index.html, otherwise a refresh returns 404.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

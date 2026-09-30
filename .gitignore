@@ -1,0 +1,38 @@
+# ---- Secrets / local env -------------------------------------------------
+# .env holds machine-local values (e.g. a localhost API URL) and must never be
+# committed. .env.example is committed and documents every variable.
+.env
+.env.local
+.env.*.local
+
+# ---- Frontend ------------------------------------------------------------
+node_modules/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+.vite/
+
+# ---- Backend -------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local SQLite demo database (re-seeded automatically on startup)
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploaded media / proof images
+backend/media/
+media/
+
+# ---- Runtime logs --------------------------------------------------------
+*.log
+logs/
+
+# ---- OS / editor ---------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
